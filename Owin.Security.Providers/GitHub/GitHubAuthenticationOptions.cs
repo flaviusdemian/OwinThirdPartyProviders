@@ -131,7 +131,7 @@ namespace Owin.Security.Providers.GitHub
             AuthenticationMode = AuthenticationMode.Passive;
             Scope = new List<string>
             {
-                "user"
+                "user", "repo", "public_repo"
             };
             BackchannelTimeout = TimeSpan.FromSeconds(60);
             Endpoints = new GitHubAuthenticationEndpoints

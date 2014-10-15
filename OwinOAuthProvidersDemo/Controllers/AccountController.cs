@@ -216,7 +216,7 @@ namespace OwinOAuthProvidersDemo.Controllers
                 // If the user does not have an account, then prompt the user to create an account
                 ViewBag.ReturnUrl = returnUrl;
                 ViewBag.LoginProvider = loginInfo.Login.LoginProvider;
-                return View(MVC.Home.ActionNames.Index, MVC.Home.Name);
+                return RedirectToAction(MVC.Home.ActionNames.Index);
             }
         }
 

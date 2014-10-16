@@ -22,86 +22,86 @@ namespace OwinOAuthProvidersDemo.Controllers
         public async virtual Task<ActionResult> Index()
         {
             //TODO: check if list name is unique -> if equal (1)
-            var lines = FileReaderBusinessLogic.ReadFiles(Server.MapPath("/Input/Input.txt"));
-            if (lines != null && lines.Length > 1)
-            {
-                string currentLine = null;
-                List<CreateRepoModel> reposToCreate = new List<CreateRepoModel>();
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    try
-                    {
-                        currentLine = lines[i];
-                        if (i == 0)
-                        {
-                            continue;
-                        }
-                        string[] partsOfCurrentLines = currentLine.Split(new string[] { "," }, StringSplitOptions.None);
-                        if (partsOfCurrentLines != null && partsOfCurrentLines.Length > 0)
-                        {
-                            string currentUserGithubUsername = null;
-                            string currentUserEmail = null;
-                            string currentUserName = null;
-                            CreateRepoModel currentRepoToCreate = new CreateRepoModel();
-                            List<UserToSendEmailTo> usersToSendEmailTo = new List<UserToSendEmailTo>();
-                            // track name  
-                            currentRepoToCreate.TrackName = partsOfCurrentLines[1].Trim();
-                            //team name
-                            currentRepoToCreate.TeamName = partsOfCurrentLines[2].Trim();
-                            //mentor name
-                            currentRepoToCreate.MentorName = partsOfCurrentLines[3].Trim();
+            //var lines = FileReaderBusinessLogic.ReadFiles(Server.MapPath("/Input/Input.txt"));
+            //if (lines != null && lines.Length > 1)
+            //{
+            //    string currentLine = null;
+            //    List<CreateRepoModel> reposToCreate = new List<CreateRepoModel>();
+            //    for (int i = 0; i < lines.Length; i++)
+            //    {
+            //        try
+            //        {
+            //            currentLine = lines[i];
+            //            if (i == 0)
+            //            {
+            //                continue;
+            //            }
+            //            string[] partsOfCurrentLines = currentLine.Split(new string[] { "," }, StringSplitOptions.None);
+            //            if (partsOfCurrentLines != null && partsOfCurrentLines.Length > 0)
+            //            {
+            //                string currentUserGithubUsername = null;
+            //                string currentUserEmail = null;
+            //                string currentUserName = null;
+            //                CreateRepoModel currentRepoToCreate = new CreateRepoModel();
+            //                List<UserToSendEmailTo> usersToSendEmailTo = new List<UserToSendEmailTo>();
+            //                // track name  
+            //                currentRepoToCreate.TrackName = partsOfCurrentLines[1].Trim();
+            //                //team name
+            //                currentRepoToCreate.TeamName = partsOfCurrentLines[2].Trim();
+            //                //mentor name
+            //                currentRepoToCreate.MentorName = partsOfCurrentLines[3].Trim();
 
-                            List<string> collaboratorsEntry = partsOfCurrentLines.ToList();
-                            for (int l = 0; l < 4; l++)
-                            {
-                                collaboratorsEntry.RemoveAt(0);
-                            }
+            //                List<string> collaboratorsEntry = partsOfCurrentLines.ToList();
+            //                for (int l = 0; l < 4; l++)
+            //                {
+            //                    collaboratorsEntry.RemoveAt(0);
+            //                }
 
-                            for (int j = 0; j < collaboratorsEntry.ToArray().Length; j++)
-                            {
-                                if (j % 4 == 0)
-                                {
-                                    try
-                                    {
-                                        currentUserName = collaboratorsEntry.ElementAt(j + 1);
-                                        currentUserEmail = collaboratorsEntry.ElementAt(j + 1);
-                                        currentUserGithubUsername = collaboratorsEntry.ElementAt(j + 2);
-                                        if (String.IsNullOrWhiteSpace(currentUserGithubUsername) == false)
-                                        {
-                                            currentRepoToCreate.Collaboratos.Add(currentUserGithubUsername, currentUserEmail);
-                                        }
-                                        else
-                                        {
-                                            usersToSendEmailTo.Add(new UserToSendEmailTo()
-                                            {
-                                                Email = currentUserEmail,
-                                                Name = currentUserName
-                                            });
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        ex.ToString();
-                                    }
-                                }
-                            }
-                            String trackAndTeamName = String.Format("{0}-{1}", currentRepoToCreate.TrackName, currentRepoToCreate.TeamName);
-                            if (currentTrackTeamCombinations.Contains(trackAndTeamName) == true)
-                            {
-                                currentRepoToCreate.TeamName = trackAndTeamName = String.Format("{0}-{1}", currentRepoToCreate.TeamName, RandomStringGenerator.RandomString(10));
-                            }
-                            currentTrackTeamCombinations.Add(trackAndTeamName);
+            //                for (int j = 0; j < collaboratorsEntry.ToArray().Length; j++)
+            //                {
+            //                    if (j % 4 == 0)
+            //                    {
+            //                        try
+            //                        {
+            //                            currentUserName = collaboratorsEntry.ElementAt(j + 1);
+            //                            currentUserEmail = collaboratorsEntry.ElementAt(j + 1);
+            //                            currentUserGithubUsername = collaboratorsEntry.ElementAt(j + 2);
+            //                            if (String.IsNullOrWhiteSpace(currentUserGithubUsername) == false)
+            //                            {
+            //                                currentRepoToCreate.Collaboratos.Add(currentUserGithubUsername, currentUserEmail);
+            //                            }
+            //                            else
+            //                            {
+            //                                usersToSendEmailTo.Add(new UserToSendEmailTo()
+            //                                {
+            //                                    Email = currentUserEmail,
+            //                                    Name = currentUserName
+            //                                });
+            //                            }
+            //                        }
+            //                        catch (Exception ex)
+            //                        {
+            //                            ex.ToString();
+            //                        }
+            //                    }
+            //                }
+            //                String trackAndTeamName = String.Format("{0}-{1}", currentRepoToCreate.TrackName, currentRepoToCreate.TeamName);
+            //                if (currentTrackTeamCombinations.Contains(trackAndTeamName) == true)
+            //                {
+            //                    currentRepoToCreate.TeamName = trackAndTeamName = String.Format("{0}-{1}", currentRepoToCreate.TeamName, RandomStringGenerator.RandomString(10));
+            //                }
+            //                currentTrackTeamCombinations.Add(trackAndTeamName);
 
-                            reposToCreate.Add(currentRepoToCreate);
-                            await CreateRepoAndAddCollaborators(currentRepoToCreate, usersToSendEmailTo);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        ex.ToString();
-                    }
-                }
-            }
+            //                reposToCreate.Add(currentRepoToCreate);
+            //                await CreateRepoAndAddCollaborators(currentRepoToCreate, usersToSendEmailTo);
+            //            }
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            ex.ToString();
+            //        }
+            //    }
+            //}
             return View();
         }
 

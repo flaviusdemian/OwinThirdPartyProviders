@@ -6,6 +6,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web.Mvc;
+using EmailUtilsRazor;
 using Newtonsoft.Json;
 using Owin.Security.Providers;
 using OwinOAuthProvidersDemo.Models;
@@ -16,8 +17,10 @@ namespace OwinOAuthProvidersDemo.Controllers
     {
         String token = "734253fe7f1742e11060992a8597ab95435adf56";
         private HttpClient client = null;
+        List<String> currentTrackTeamCombinations = new List<string>();
         public async virtual Task<ActionResult> Index()
         {
+            //TODO: check if list name is unique -> if equal (1)
             var lines = FileReaderBusinessLogic.ReadFiles(Server.MapPath("/Input/Input.txt"));
             if (lines != null && lines.Length > 1)
             {
@@ -32,12 +35,14 @@ namespace OwinOAuthProvidersDemo.Controllers
                         {
                             continue;
                         }
-                        string[] partsOfCurrentLines = currentLine.Split(new string[] { "," }, StringSplitOptions.RemoveEmptyEntries);
+                        string[] partsOfCurrentLines = currentLine.Split(new string[] { "," }, StringSplitOptions.None);
                         if (partsOfCurrentLines != null && partsOfCurrentLines.Length > 0)
                         {
                             string currentUserGithubUsername = null;
                             string currentUserEmail = null;
+                            string currentUserName = null;
                             CreateRepoModel currentRepoToCreate = new CreateRepoModel();
+                            List<UserToSendEmailTo> usersToSendEmailTo = new List<UserToSendEmailTo>();
                             // track name  
                             currentRepoToCreate.TrackName = partsOfCurrentLines[1].Trim();
                             //team name
@@ -53,22 +58,41 @@ namespace OwinOAuthProvidersDemo.Controllers
 
                             for (int j = 0; j < collaboratorsEntry.ToArray().Length; j++)
                             {
-                                if (j % 3 == 0)
+                                if (j % 4 == 0)
                                 {
-                                    currentUserGithubUsername = collaboratorsEntry.ElementAt(j);
                                     try
                                     {
+                                        currentUserName = collaboratorsEntry.ElementAt(j + 1);
                                         currentUserEmail = collaboratorsEntry.ElementAt(j + 1);
+                                        currentUserGithubUsername = collaboratorsEntry.ElementAt(j + 2);
+                                        if (String.IsNullOrWhiteSpace(currentUserGithubUsername) == false)
+                                        {
+                                            currentRepoToCreate.Collaboratos.Add(currentUserGithubUsername, currentUserEmail);
+                                        }
+                                        else
+                                        {
+                                            usersToSendEmailTo.Add(new UserToSendEmailTo()
+                                            {
+                                                Email = currentUserEmail,
+                                                Name = currentUserName
+                                            });
+                                        }
                                     }
                                     catch (Exception ex)
                                     {
                                         ex.ToString();
                                     }
-                                    currentRepoToCreate.Collaboratos.Add(currentUserGithubUsername, currentUserEmail);
                                 }
                             }
-                            await CreateRepoAndAddCollaborators(currentRepoToCreate);
+                            String trackAndTeamName = String.Format("{0}-{1}", currentRepoToCreate.TrackName, currentRepoToCreate.TeamName);
+                            if (currentTrackTeamCombinations.Contains(trackAndTeamName) == true)
+                            {
+                                currentRepoToCreate.TeamName = trackAndTeamName = String.Format("{0}-{1}", currentRepoToCreate.TeamName, RandomStringGenerator.RandomString(10));
+                            }
+                            currentTrackTeamCombinations.Add(trackAndTeamName);
+
                             reposToCreate.Add(currentRepoToCreate);
+                            await CreateRepoAndAddCollaborators(currentRepoToCreate, usersToSendEmailTo);
                         }
                     }
                     catch (Exception ex)
@@ -79,12 +103,28 @@ namespace OwinOAuthProvidersDemo.Controllers
             }
             return View();
         }
-        private async Task CreateRepoAndAddCollaborators(CreateRepoModel currentRepoToCreate)
+
+        private void SendEmailToUserWithoutGithubAccount(UserToSendEmailTo userInfo)
         {
             try
             {
-                if (currentRepoToCreate != null && currentRepoToCreate.Collaboratos != null &&
-                    String.IsNullOrWhiteSpace(currentRepoToCreate.TrackName) == false
+                bool result = EmailHelper.SendHtmlTemplatedEmailFromPath(userInfo.Email, "HackTM Notice", "Views/Templates/Emails/UserSendEmailNoGitAccount.cshtml", true, userInfo);
+                if (result == false)
+                {
+                    int x = 0;
+                    x++;
+                }
+            }
+            catch (Exception ex)
+            {
+                ex.ToString();
+            }
+        }
+        private async Task CreateRepoAndAddCollaborators(CreateRepoModel currentRepoToCreate, List<UserToSendEmailTo> usersToSendEmailTo)
+        {
+            try
+            {
+                if (currentRepoToCreate != null && String.IsNullOrWhiteSpace(currentRepoToCreate.TrackName) == false
                     && String.IsNullOrWhiteSpace(currentRepoToCreate.TeamName) == false
                     && String.IsNullOrWhiteSpace(currentRepoToCreate.MentorName) == false)
                 {
@@ -110,18 +150,30 @@ namespace OwinOAuthProvidersDemo.Controllers
                         result.EnsureSuccessStatusCode();
                         string content = await result.Content.ReadAsStringAsync();
                         var parsedObject = JsonConvert.DeserializeObject<GithubCreateRepositoryResponseRepoDetails>(content);
-
-                        foreach (var collaboratorsEntry in currentRepoToCreate.Collaboratos)
+                        if (currentRepoToCreate.Collaboratos != null && currentRepoToCreate.Collaboratos.Count > 0)
                         {
-                            try
+                            foreach (var collaboratorsEntry in currentRepoToCreate.Collaboratos)
                             {
-                                result = await client.PutAsync(new Uri(
-                                 String.Format("https://api.github.com/repos/{0}/collaborators/{1}?access_token={2}", parsedObject.FullName, collaboratorsEntry.Key.Trim(), token)), null);
-                                result.EnsureSuccessStatusCode();
+                                try
+                                {
+                                    result = await client.PutAsync(new Uri(
+                                     String.Format("https://api.github.com/repos/{0}/collaborators/{1}?access_token={2}", parsedObject.FullName, collaboratorsEntry.Key.Trim(), token)), null);
+                                    result.EnsureSuccessStatusCode();
+                                }
+                                catch (Exception ex)
+                                {
+                                    ex.ToString();
+                                }
                             }
-                            catch (Exception ex)
+                        }
+
+                        if (usersToSendEmailTo != null && usersToSendEmailTo.Count > 0)
+                        {
+                            foreach (var userToSendEmailToEntry in usersToSendEmailTo)
                             {
-                                ex.ToString();
+                                userToSendEmailToEntry.Email = "flavius_praf@yahoo.com";
+                                userToSendEmailToEntry.RepoLink = parsedObject.RepoUrl;
+                                SendEmailToUserWithoutGithubAccount(userToSendEmailToEntry);
                             }
                         }
                     }

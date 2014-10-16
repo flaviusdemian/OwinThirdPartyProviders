@@ -124,13 +124,6 @@ namespace OwinOAuthProvidersDemo.Controllers
                                 ex.ToString();
                             }
                         }
-                        //https://api.github.com/repos/slown1/GRWXUZEMIJ/collaborators/vladisac
-                        //string owner = "slown1";
-                        //string projectId = "GRWXUZEMIJ";
-                        //string usertoInvite = "denisdenes";
-
-
-                        //result = await client.Get()
                     }
                     catch (Exception ex)
                     {

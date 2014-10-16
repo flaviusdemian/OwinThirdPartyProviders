@@ -1,2 +1,0 @@
-Timestamp,Track name,Team name,Team mentor,Member #1 Github_username, Email, Member #2 Github_username, Email
-15/10/2014 21:17:36,Mobile,A-Team,Dan Dan,denisdenes,denisdenes@live.com,vladisac,vladisac@gmail.com

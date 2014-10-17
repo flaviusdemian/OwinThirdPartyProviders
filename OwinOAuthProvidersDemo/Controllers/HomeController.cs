@@ -15,18 +15,18 @@ namespace OwinOAuthProvidersDemo.Controllers
 {
     public partial class HomeController : Controller
     {
-        String token = "734253fe7f1742e11060992a8597ab95435adf56";
+        String token = "147a9066d2f30d590ce1217ff90fbf887eec7c0f";
         //private String token = "147a9066d2f30d590ce1217ff90fbf887eec7c0f";
         private HttpClient client = null;
         List<String> currentTrackTeamCombinations = new List<string>();
         public async virtual Task<ActionResult> Index()
         {
-            //TODO: check if list name is unique -> if equal (1)
+            //List<CreateRepoModel> reposToCreate = new List<CreateRepoModel>();
+            ////TODO: check if list name is unique -> if equal (1)
             //var lines = FileReaderBusinessLogic.ReadFiles(Server.MapPath("/Input/Input.txt"));
             //if (lines != null && lines.Length > 1)
             //{
             //    string currentLine = null;
-            //    List<CreateRepoModel> reposToCreate = new List<CreateRepoModel>();
             //    for (int i = 0; i < lines.Length; i++)
             //    {
             //        try
@@ -47,9 +47,9 @@ namespace OwinOAuthProvidersDemo.Controllers
             //                // track name  
             //                currentRepoToCreate.TrackName = partsOfCurrentLines[1].Trim();
             //                //team name
-            //                currentRepoToCreate.TeamName = partsOfCurrentLines[2].Trim();
+            //                currentRepoToCreate.TeamName = partsOfCurrentLines[3].Trim();
             //                //mentor name
-            //                currentRepoToCreate.MentorName = partsOfCurrentLines[3].Trim();
+            //                currentRepoToCreate.MentorName = partsOfCurrentLines[2].Trim();
 
             //                List<string> collaboratorsEntry = partsOfCurrentLines.ToList();
             //                for (int l = 0; l < 4; l++)
@@ -68,15 +68,25 @@ namespace OwinOAuthProvidersDemo.Controllers
             //                            currentUserGithubUsername = collaboratorsEntry.ElementAt(j + 2);
             //                            if (String.IsNullOrWhiteSpace(currentUserGithubUsername) == false)
             //                            {
-            //                                currentRepoToCreate.Collaboratos.Add(currentUserGithubUsername, currentUserEmail);
+            //                                try
+            //                                {
+            //                                    currentRepoToCreate.Collaboratos.Add(currentUserGithubUsername, currentUserEmail);
+            //                                }
+            //                                catch (Exception ex)
+            //                                {
+            //                                    ex.ToString();
+            //                                }
             //                            }
             //                            else
             //                            {
-            //                                usersToSendEmailTo.Add(new UserToSendEmailTo()
+            //                                if (String.IsNullOrWhiteSpace(currentUserEmail) == false)
             //                                {
-            //                                    Email = currentUserEmail,
-            //                                    Name = currentUserName
-            //                                });
+            //                                    usersToSendEmailTo.Add(new UserToSendEmailTo()
+            //                                    {
+            //                                        Email = currentUserEmail,
+            //                                        Name = currentUserName
+            //                                    });
+            //                                }
             //                            }
             //                        }
             //                        catch (Exception ex)
@@ -93,14 +103,14 @@ namespace OwinOAuthProvidersDemo.Controllers
             //                currentTrackTeamCombinations.Add(trackAndTeamName);
 
             //                reposToCreate.Add(currentRepoToCreate);
-            //                await CreateRepoAndAddCollaborators(currentRepoToCreate, usersToSendEmailTo);
-            //            }
-            //        }
-            //        catch (Exception ex)
-            //        {
-            //            ex.ToString();
-            //        }
-            //    }
+            //                // await CreateRepoAndAddCollaborators(currentRepoToCreate, usersToSendEmailTo);
+                        //}
+                //    }
+                //    catch (Exception ex)
+                //    {
+                //        ex.ToString();
+                //    }
+                //}
             //}
             return View();
         }
@@ -126,8 +136,7 @@ namespace OwinOAuthProvidersDemo.Controllers
             try
             {
                 if (currentRepoToCreate != null && String.IsNullOrWhiteSpace(currentRepoToCreate.TrackName) == false
-                    && String.IsNullOrWhiteSpace(currentRepoToCreate.TeamName) == false
-                    && String.IsNullOrWhiteSpace(currentRepoToCreate.MentorName) == false)
+                    && String.IsNullOrWhiteSpace(currentRepoToCreate.TeamName) == false )
                 {
                     client = new HttpClient();
                     GithubCreateRepositoryRequest model = new GithubCreateRepositoryRequest()
@@ -172,7 +181,6 @@ namespace OwinOAuthProvidersDemo.Controllers
                         {
                             foreach (var userToSendEmailToEntry in usersToSendEmailTo)
                             {
-                                userToSendEmailToEntry.Email = "flavius_praf@yahoo.com";
                                 userToSendEmailToEntry.RepoLink = parsedObject.RepoUrl;
                                 SendEmailToUserWithoutGithubAccount(userToSendEmailToEntry);
                             }

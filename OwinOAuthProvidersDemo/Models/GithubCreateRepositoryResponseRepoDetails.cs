@@ -8,8 +8,12 @@ namespace OwinOAuthProvidersDemo.Models
 {
     public class GithubCreateRepositoryResponseRepoDetails
     {
+        [JsonProperty(PropertyName = "name")]
+        public String Name { get; set; }
+
         [JsonProperty(PropertyName = "full_name")]
         public String FullName { get; set; }
+
 
         [JsonProperty(PropertyName = "id")]
         public String Id { get; set; }

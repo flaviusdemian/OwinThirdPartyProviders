@@ -196,6 +196,7 @@
       <DependentUpon>T4MVC.tt</DependentUpon>
     </Compile>
     <Compile Include="Models\AccountViewModels.cs" />
+    <Compile Include="Models\CommitModel.cs" />
     <Compile Include="Models\CreateRepoModel.cs" />
     <Compile Include="Models\GithubCreateRepositoryResponseRepoDetails.cs" />
     <Compile Include="Models\GithubCreateRepositoryRequest.cs" />

@@ -16,11 +16,12 @@ namespace OwinOAuthProvidersDemo.Controllers
     public partial class HomeController : Controller
     {
         String token = "147a9066d2f30d590ce1217ff90fbf887eec7c0f";
-        //private String token = "147a9066d2f30d590ce1217ff90fbf887eec7c0f";
         private HttpClient client = null;
         List<String> currentTrackTeamCombinations = new List<string>();
         public async virtual Task<ActionResult> Index()
         {
+
+            await GetGithubReposStatistics();
             //List<CreateRepoModel> reposToCreate = new List<CreateRepoModel>();
             ////TODO: check if list name is unique -> if equal (1)
             //var lines = FileReaderBusinessLogic.ReadFiles(Server.MapPath("/Input/Input.txt"));
@@ -63,14 +64,16 @@ namespace OwinOAuthProvidersDemo.Controllers
             //                    {
             //                        try
             //                        {
-            //                            currentUserName = collaboratorsEntry.ElementAt(j + 1);
             //                            currentUserEmail = collaboratorsEntry.ElementAt(j + 1);
             //                            currentUserGithubUsername = collaboratorsEntry.ElementAt(j + 2);
             //                            if (String.IsNullOrWhiteSpace(currentUserGithubUsername) == false)
             //                            {
             //                                try
             //                                {
-            //                                    currentRepoToCreate.Collaboratos.Add(currentUserGithubUsername, currentUserEmail);
+            //                                    if (currentRepoToCreate.Collaboratos.ContainsKey(currentUserGithubUsername) == false)
+            //                                    {
+            //                                        currentRepoToCreate.Collaboratos.Add(currentUserGithubUsername, currentUserEmail);
+            //                                    }
             //                                }
             //                                catch (Exception ex)
             //                                {
@@ -103,18 +106,78 @@ namespace OwinOAuthProvidersDemo.Controllers
             //                currentTrackTeamCombinations.Add(trackAndTeamName);
 
             //                reposToCreate.Add(currentRepoToCreate);
-            //                // await CreateRepoAndAddCollaborators(currentRepoToCreate, usersToSendEmailTo);
-                        //}
-                //    }
-                //    catch (Exception ex)
-                //    {
-                //        ex.ToString();
-                //    }
-                //}
+            //                await CreateRepoAndAddCollaborators(currentRepoToCreate, usersToSendEmailTo);
+            //            }
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            ex.ToString();
+            //        }
+            //    }
             //}
             return View();
         }
 
+        private async Task GetGithubReposStatistics()
+        {
+            try
+            {
+                client = new HttpClient();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "https://api.github.com/meta");
+                var result = await client.GetAsync(
+                    String.Format("https://api.github.com/users/hacktm/repos?access_token={0}&direction=desc", token));
+
+                int sum = 0;
+                var repos = JsonConvert.DeserializeObject<List<GithubCreateRepositoryResponseRepoDetails>>(await result.Content.ReadAsStringAsync());
+                if( repos != null)
+                {
+                    foreach (var repo in repos)
+                    {
+                        sum += await GetGithubRepoCommits(repo.Name);
+                    }
+                    
+                }
+                result.EnsureSuccessStatusCode();
+            }
+            catch (Exception ex)
+            {
+                ex.ToString();
+            }
+        }
+
+        private async Task<int> GetGithubRepoCommits(string repoName)
+        {
+            try
+            {
+                client = new HttpClient();
+                client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                client.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", "https://api.github.com/meta");
+                var result = await client.GetAsync(String.Format("https://api.github.com/repos/hacktm/{0}/commits?access_token={1}", repoName, token));
+                try
+                {
+                    var commits = JsonConvert.DeserializeObject<List<CommitModel>>(await result.Content.ReadAsStringAsync());
+                    if (commits != null)
+                    {
+                        return commits.Count;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ex.ToString();
+                }
+                
+                result.EnsureSuccessStatusCode();
+            }
+            catch (Exception ex)
+            {
+                ex.ToString();
+            }
+            return 0;
+        }
+
+
+        #region createRepos
         private void SendEmailToUserWithoutGithubAccount(UserToSendEmailTo userInfo)
         {
             try
@@ -136,7 +199,7 @@ namespace OwinOAuthProvidersDemo.Controllers
             try
             {
                 if (currentRepoToCreate != null && String.IsNullOrWhiteSpace(currentRepoToCreate.TrackName) == false
-                    && String.IsNullOrWhiteSpace(currentRepoToCreate.TeamName) == false )
+                    && String.IsNullOrWhiteSpace(currentRepoToCreate.TeamName) == false)
                 {
                     client = new HttpClient();
                     GithubCreateRepositoryRequest model = new GithubCreateRepositoryRequest()
@@ -197,6 +260,8 @@ namespace OwinOAuthProvidersDemo.Controllers
                 ex.ToString();
             }
         }
+
+        #endregion
 
         public virtual ActionResult SigninGithub()
         {
